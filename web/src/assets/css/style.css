@@ -67,8 +67,9 @@ body.dark-mode nav {
 }
 
 .logo-img {
-  max-width: 48px;
-  max-height: 48px;
+  max-width: 100px;
+  max-height: 100px;
+  margin-top: 20px;
   width: auto;
   object-fit: contain;
 }
