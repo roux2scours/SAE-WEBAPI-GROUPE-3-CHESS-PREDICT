@@ -26,7 +26,6 @@ body {
   overflow-x: hidden;
 }
 
-/*Navigation*/
 /* Navigation */
 .nav-toggle {
   display: none;
@@ -110,4 +109,25 @@ body.dark-mode nav {
 
 .nav-links a:hover::after {
   width: 100%;
+}
+
+/* footer */
+footer {
+  background: var(--dark);
+  color: var(--light);
+  text-align: center;
+  padding: 1rem 0;
+  margin-top: 2rem;
+
+}
+
+footer a {
+  color: var(--light);
+  text-decoration: none;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+footer a:hover {
+  text-decoration: underline;
 }
