@@ -10,6 +10,7 @@ require_once 'config.php';
     <title><?php echo $page_title ?? SITE_NAME; ?></title>
     <link rel="icon" type="image/png" href="<?php echo LOGO_URL; ?>" sizes="918x918">
     <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/playerCard.css">
     <link rel="stylesheet" href="assets/css/theme-toggle.css">
 </head>
 <body></body>

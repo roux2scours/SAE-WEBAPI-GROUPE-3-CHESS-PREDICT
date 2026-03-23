@@ -5,6 +5,4 @@ include 'includes/header.php';
 include 'includes/nav.php';
 
 
-echo "<h1>SAÉ BUT2 – Application Web</h1>";
-
 include 'includes/footer.php';
