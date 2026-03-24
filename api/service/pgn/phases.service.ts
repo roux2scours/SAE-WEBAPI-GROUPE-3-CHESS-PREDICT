@@ -1,31 +1,38 @@
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
 export interface PhaseScores {
     ouverture: number;
     milieu: number;
     finale: number;
 }
 
-export function scorePhasesDepuisPGN(pgn: string): PhaseScores {
-    // Extraction des coups SAN
-    const moves = [...pgn.matchAll(/\d+\.\s*([^\s]+)(?:\s+([^\s]+))?/g)]
-        .flatMap(m => [m[1], m[2]])
-        .filter(Boolean);
+// Analyse ouverture / milieu / finale à partir de la base de données.
+export async function scorePhasesDepuisDB(gameId: number): Promise<PhaseScores> {
+    // Récupération des coups
+    const moves = await prisma.move.findMany({
+        where: { gameId },
+        orderBy: { ply: "asc" }
+    });
 
     const totalCoups = moves.length;
+
     if (totalCoups === 0) {
         return { ouverture: 100, milieu: 100, finale: 100 };
     }
 
-    // Découpage simple
-    const ouvertureFin = Math.min(20, totalCoups); // 20 demi-coups
-    const finaleDebut = Math.floor(totalCoups * 0.8); // dernier 20%
+    // Découpage
+    const ouvertureFin = Math.min(20, totalCoups);          // 20 demi-coups(les 10 premiers coups)
+    const finaleDebut = Math.floor(totalCoups * 0.8);       // les 20% derniers coups
 
-    // Pénalités par phase
     const penOuverture = { g: 0, e: 0, i: 0 };
     const penMilieu = { g: 0, e: 0, i: 0 };
     const penFinale = { g: 0, e: 0, i: 0 };
 
+    // On parcourt tous les coups et on attribue les pénalités à la phase correspondante
     for (let i = 0; i < moves.length; i++) {
-        const san = moves[i]!;
+        const san = moves[i].san ?? "";
         const demiCoup = i + 1;
 
         const target =
@@ -35,10 +42,18 @@ export function scorePhasesDepuisPGN(pgn: string): PhaseScores {
                     ? penFinale
                     : penMilieu;
 
-        if (san.includes("??")) target.g++;
-        else if (san.includes("?") && !san.includes("??")) target.e++;
-        else if (san.includes("?!") || san.includes("!?")) target.i++;
+        if (san.includes("??")) {
+            target.g++;
+        } else if (san.includes("?!") || san.includes("!?")) {
+            target.i++;
+        } else if (san.includes("?")) {
+            target.e++;
+        }
     }
+
+    const coupsOuverture = ouvertureFin;
+    const coupsFinale = totalCoups - finaleDebut;
+    const coupsMilieu = totalCoups - coupsOuverture - coupsFinale;
 
     function calcScore(p: { g: number; e: number; i: number }, coups: number): number {
         if (coups <= 0) return 100;
@@ -46,10 +61,6 @@ export function scorePhasesDepuisPGN(pgn: string): PhaseScores {
         const brut = (1 - penalite / coups) * 100;
         return Math.round(Math.max(0, Math.min(100, brut)));
     }
-
-    const coupsOuverture = ouvertureFin;
-    const coupsFinale = totalCoups - finaleDebut;
-    const coupsMilieu = totalCoups - coupsOuverture - coupsFinale;
 
     return {
         ouverture: calcScore(penOuverture, coupsOuverture),

@@ -1,3 +1,7 @@
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
 export interface TactiqueResult {
     score: number;
     coups: number;
@@ -7,15 +11,41 @@ export interface TactiqueResult {
     bonsCoups: number;
 }
 
-export function scoreTactiqueDepuisPGN(pgn: string): TactiqueResult {
-    const erreurs = (pgn.match(/\?\?/g) || []).length;
-    const imprecisions = (pgn.match(/\?!|!\?/g) || []).length;
-    const brillants = (pgn.match(/\!\!/g) || []).length;
+/**
+ * Calcule le score tactique d'une partie à partir de la base de données.:
+ *  - "??" = gaffe
+ *  - "?"  = erreur 
+ *  - "?!" ou "!?" = imprécision
+ *  - "!!" = brilliant
+ *  - "!" = bon coup
+ */
+export async function scoreTactiqueDepuisDB(gameId: number): Promise<TactiqueResult> {
+    // Récupération des coups de la partie
+    const moves = await prisma.move.findMany({
+        where: { gameId },
+        orderBy: { ply: "asc" }
+    });
 
-    const totalExclamations = (pgn.match(/!/g) || []).length;
-    const bonsCoups = totalExclamations - brillants * 2;
+    let erreurs = 0;
+    let imprecisions = 0;
+    let brillants = 0;
+    let bonsCoups = 0;
 
-    const coups = (pgn.match(/\d+\./g) || []).length;
+    for (const move of moves) {
+        const san = move.san ?? "";
+        //on compte les erreurs, imprécisions, brillants et bons coups
+        if (san.includes("??")) {
+            erreurs++;
+        } else if (san.includes("?!") || san.includes("!?")) {
+            imprecisions++;
+        } else if (san.includes("!!")) {
+            brillants++;
+        } else if (san.includes("!")) {
+            bonsCoups++;
+        }
+    }
+
+    const coups = moves.length;
 
     if (coups === 0) {
         return {
@@ -28,10 +58,12 @@ export function scoreTactiqueDepuisPGN(pgn: string): TactiqueResult {
         };
     }
 
-    const penalite = erreurs * 2 + imprecisions - brillants * 2 - bonsCoups;
-    const tactique = (1 - penalite / 100) * 100;
 
-    const score = Math.round(Math.max(0, Math.min(100, tactique)));
+    // tactique = (1 - (E*2 + I - B*2 - F) / 100) * 100
+    const penalite = erreurs * 2 + imprecisions - brillants * 2 - bonsCoups;
+    const brut = (1 - penalite / 100) * 100;
+
+    const score = Math.round(Math.max(0, Math.min(100, brut)));
 
     return {
         score,

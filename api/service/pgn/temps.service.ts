@@ -1,25 +1,27 @@
+import { PrismaClient, Game } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
 export interface TempsResult {
     score: number;
     totalParties: number;
     timeouts: number;
 }
 
-export function scoreGestionTempsDepuisPGNList(pgnList: string[]): TempsResult {
-    let timeouts = 0;
-    let totalParties = 0;
+// Calcule le score de gestion du temps pour un joueur en analysant toutes ses parties dans la base de données.
 
-    for (const pgn of pgnList) {
-        if (!pgn.trim()) continue;
-
-        totalParties++;
-
-        // Recherche du tag Termination "Time forfeit"
-        const match = pgn.match(/\[Termination\s+"([^"]+)"\]/);
-
-        if (match?.[1]?.includes("Time forfeit")) {
-            timeouts++;
+export async function scoreGestionTempsDepuisDB(playerId: number): Promise<TempsResult> {
+    // Récupération de toutes les parties du joueur
+    const games: Game[] = await prisma.game.findMany({
+        where: {
+            OR: [
+                { whitePlayerId: playerId },
+                { blackPlayerId: playerId }
+            ]
         }
-    }
+    });
+
+    const totalParties = games.length;
 
     if (totalParties === 0) {
         return {
@@ -29,6 +31,7 @@ export function scoreGestionTempsDepuisPGNList(pgnList: string[]): TempsResult {
         };
     }
 
+    const timeouts = games.filter((g: Game) => g.termination === "Time forfeit").length;
 
     const brut = 100 - (timeouts / totalParties) * 100;
     const score = Math.round(Math.max(0, Math.min(100, brut)));
