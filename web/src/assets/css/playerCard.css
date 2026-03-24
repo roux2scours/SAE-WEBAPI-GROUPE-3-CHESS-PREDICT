@@ -12,13 +12,18 @@
 .player-card {
   margin: auto;
   max-width: 500px;
-  min-height: 800px;
+  height: 750px;
   background-color: var(--dark);
   color: var(--light);
-  margin-top: 10vh;
+  margin-top: 15vh;
   padding: 5vh;
   border-radius: 30px;
-  border: var(--verydark) 5px solid;
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
+  transition: box-shadow 0.2s ease;
+}
+
+.player-card:hover {
+  box-shadow: 8px 8px 20px rgba(0, 0, 0, 0.7);
 }
 
 player-card-head {
@@ -49,22 +54,25 @@ player-card-head {
 }
 
 .player-card-graphique {
-  min-height: 300px;
+  height: 270px;
+  width: 300px;
+  margin: auto;
   border-radius: 30px;
   margin-top: 25px;
 }
 
 .chart-canvas {
-  width: 100%;
+  width: 90%;
   height: 100%;
+  margin: auto;
 }
 
 .player-card-facultes {
-  margin-top: 3vh;
+  margin-top: 10px;
 }
 
 .player-card-faculte {
-  margin-top: 10px;
+  margin-top: 5px;
   max-width: 300px;
 }
 

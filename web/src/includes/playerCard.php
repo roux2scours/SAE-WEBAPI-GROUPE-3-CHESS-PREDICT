@@ -8,12 +8,14 @@ $stats_winrate = [70, 20, 10];
 <div class="player-card">
     <div class="player-card-head">
         <p class="player-card-name">Magnus Carlsen</p>
-        <p class="player-card-rank">#1</p>
+        <a href="index.php" class="player-card-rank">#1</a>
     </div>
     <div class="player-card-horizontal-bar"></div>
     <div class="player-card-graphique">
-        <canvas class="chart-canvas" data-chart-label="Ratio de victoires"
-            data-chart-labels='<?= json_encode($labels) ?>' data-chart-data='<?= json_encode($stats_winrate) ?>'>
+        <canvas class="chart-canvas" 
+            data-chart-label="Winrate"
+            data-chart-labels='<?= json_encode($labels) ?>'
+            data-chart-data='<?= json_encode($stats_winrate) ?>'>
         </canvas>
     </div>
     <div class="player-card-facultes">
