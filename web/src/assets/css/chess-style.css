@@ -1,0 +1,40 @@
+.chess-container {
+    max-width: 450px;
+    margin: 20px auto;
+    margin-top: 15vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#board {
+    width: 100%;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.btn-nav {
+    flex: 1;
+    padding: 12px;
+    margin: 0 5px;
+    background: #312e2b;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.btn-nav:hover {
+    background: #45413e;
+}
+
+.btn-nav:disabled {
+    background: #1e1c1a;
+    color: #555;
+    cursor: not-allowed;
+}
