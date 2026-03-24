@@ -21,9 +21,23 @@
   border: var(--verydark) 5px solid;
 }
 
+player-card-head {
+  display: inline-flex;
+}
+
 .player-card-name {
   font-size: 36px;
   margin-top: 20px;
+  max-width: 300px;
+  display: inline;
+}
+
+.player-card-rank {
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--intermediate);
+  display: inline;
+  max-width: 70px;
 }
 
 .player-card-horizontal-bar {
@@ -38,7 +52,11 @@
   min-height: 300px;
   border-radius: 30px;
   margin-top: 25px;
-  border: var(--verydark) 5px solid;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 100%;
 }
 
 .player-card-facultes {
@@ -60,8 +78,9 @@
 }
 
 .player-card-faculte-force {
-  font-size: 30px;
-  color: var(--intermediate);
+  font-size: 34px;
+  font-weight: bold;
+  color: var(--primary);
 }
 
 .player-card-faculte-force p {
