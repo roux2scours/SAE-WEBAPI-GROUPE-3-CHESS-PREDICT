@@ -43,7 +43,7 @@ class ChartsManager {
               position: "bottom",
               labels: {
                 // ICI : On change la couleur de la police des labels
-                color: "#ffffff", // Un gris foncé (Tailwind gray-700)
+                color: "#ffffff",
                 font: {
                   size: 14,
                   weight: "bold",
