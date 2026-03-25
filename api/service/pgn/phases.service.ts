@@ -1,70 +1,83 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Game } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export interface PhaseScores {
+export interface PhasesScore {
     ouverture: number;
     milieu: number;
     finale: number;
 }
 
-// Analyse ouverture / milieu / finale à partir de la base de données.
-export async function scorePhasesDepuisDB(gameId: number): Promise<PhaseScores> {
-    // Récupération des coups
-    const moves = await prisma.move.findMany({
-        where: { gameId },
-        orderBy: { ply: "asc" }
+/**
+ * Détermine dans quelle phase la partie s'est terminée.
+ */
+function getPhaseOfTermination(movesCount: number): "ouverture" | "milieu" | "finale" {
+    const coups = Math.ceil(movesCount / 2);
+
+    if (coups <= 10) return "ouverture";
+    if (coups <= 40) return "milieu";
+    return "finale";
+}
+
+/**
+ * Analyse toutes les parties d’un joueur et calcule les scores de phases.
+ * Règles :
+ * - Ouverture = coups 1 à 10
+ * - Milieu = coups 11 à 40
+ * - Finale = coups 41+
+ * - Si le joueur perd dans une phase → -1 point pour cette phase
+ * - Score final = 100 - (défaites_phase / total_parties) * 100
+ */
+export async function scorePhasesDepuisDB(playerId: number): Promise<PhasesScore> {
+    const games: Game[] = await prisma.game.findMany({
+        where: {
+            OR: [
+                { whitePlayerId: playerId },
+                { blackPlayerId: playerId }
+            ]
+        }
     });
 
-    const totalCoups = moves.length;
-
-    if (totalCoups === 0) {
-        return { ouverture: 100, milieu: 100, finale: 100 };
+    if (games.length === 0) {
+        return {
+            ouverture: 100,
+            milieu: 100,
+            finale: 100
+        };
     }
 
-    // Découpage
-    const ouvertureFin = Math.min(20, totalCoups);          // 20 demi-coups(les 10 premiers coups)
-    const finaleDebut = Math.floor(totalCoups * 0.8);       // les 20% derniers coups
+    let defOuverture = 0;
+    let defMilieu = 0;
+    let defFinale = 0;
 
-    const penOuverture = { g: 0, e: 0, i: 0 };
-    const penMilieu = { g: 0, e: 0, i: 0 };
-    const penFinale = { g: 0, e: 0, i: 0 };
+    for (const game of games) {
+        const movesCount = await prisma.move.count({
+            where: { gameId: game.id }
+        });
 
-    // On parcourt tous les coups et on attribue les pénalités à la phase correspondante
-    for (let i = 0; i < moves.length; i++) {
-        const san = moves[i].san ?? "";
-        const demiCoup = i + 1;
+        const phase = getPhaseOfTermination(movesCount);
 
-        const target =
-            demiCoup <= ouvertureFin
-                ? penOuverture
-                : demiCoup >= finaleDebut
-                    ? penFinale
-                    : penMilieu;
+        const playerIsWhite = game.whitePlayerId === playerId;
+        const playerLost =
+            (playerIsWhite && game.result === "0-1") ||
+            (!playerIsWhite && game.result === "1-0");
 
-        if (san.includes("??")) {
-            target.g++;
-        } else if (san.includes("?!") || san.includes("!?")) {
-            target.i++;
-        } else if (san.includes("?")) {
-            target.e++;
+        if (playerLost) {
+            if (phase === "ouverture") defOuverture++;
+            else if (phase === "milieu") defMilieu++;
+            else defFinale++;
         }
     }
 
-    const coupsOuverture = ouvertureFin;
-    const coupsFinale = totalCoups - finaleDebut;
-    const coupsMilieu = totalCoups - coupsOuverture - coupsFinale;
+    const total = games.length;
 
-    function calcScore(p: { g: number; e: number; i: number }, coups: number): number {
-        if (coups <= 0) return 100;
-        const penalite = p.g * 3 + p.e * 2 + p.i;
-        const brut = (1 - penalite / coups) * 100;
-        return Math.round(Math.max(0, Math.min(100, brut)));
+    function score(defaites: number): number {
+        return Math.max(0, Math.round(100 - (defaites / total) * 100));
     }
 
     return {
-        ouverture: calcScore(penOuverture, coupsOuverture),
-        milieu: calcScore(penMilieu, coupsMilieu),
-        finale: calcScore(penFinale, coupsFinale)
+        ouverture: score(defOuverture),
+        milieu: score(defMilieu),
+        finale: score(defFinale)
     };
 }

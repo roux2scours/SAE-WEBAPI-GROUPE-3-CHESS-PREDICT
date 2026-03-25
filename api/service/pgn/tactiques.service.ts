@@ -1,76 +1,119 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Game, Move } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export interface TactiqueResult {
+export interface TactiqueScore {
     score: number;
-    coups: number;
-    erreurs: number;
-    imprecisions: number;
-    brillants: number;
-    bonsCoups: number;
+    pointsGagnes: number;
+    parties: number;
 }
 
-/**
- * Calcule le score tactique d'une partie à partir de la base de données.:
- *  - "??" = gaffe
- *  - "?"  = erreur 
- *  - "?!" ou "!?" = imprécision
- *  - "!!" = brilliant
- *  - "!" = bon coup
- */
-export async function scoreTactiqueDepuisDB(gameId: number): Promise<TactiqueResult> {
-    // Récupération des coups de la partie
-    const moves = await prisma.move.findMany({
-        where: { gameId },
-        orderBy: { ply: "asc" }
+// Détermine la valeur de la capture selon la pièce capturée
+function valeurCapture(san: string): number {
+    // Capture d'un pion : exd5
+    if (/^[a-h]x/.test(san)) return 1;
+
+    // Capture par une pièce
+    const piece = san[0];
+
+    switch (piece) {
+        case "N":
+        case "B":
+        case "R":
+            return 2;
+        case "Q":
+            return 3;
+        default:
+            return 1;
+    }
+}
+
+function estPromotion(san: string): boolean {
+    return san.includes("=");
+}
+
+export async function scoreTactiqueDepuisDB(playerId: number): Promise<TactiqueScore> {
+    const games = await prisma.game.findMany({
+        where: {
+            OR: [
+                { whitePlayerId: playerId },
+                { blackPlayerId: playerId }
+            ]
+        }
     });
 
-    let erreurs = 0;
-    let imprecisions = 0;
-    let brillants = 0;
-    let bonsCoups = 0;
+    if (games.length === 0) {
+        return { score: 100, pointsGagnes: 0, parties: 0 };
+    }
 
-    for (const move of moves) {
-        const san = move.san ?? "";
-        //on compte les erreurs, imprécisions, brillants et bons coups
-        if (san.includes("??")) {
-            erreurs++;
-        } else if (san.includes("?!") || san.includes("!?")) {
-            imprecisions++;
-        } else if (san.includes("!!")) {
-            brillants++;
-        } else if (san.includes("!")) {
-            bonsCoups++;
+    let pointsGagnes = 0;
+
+    for (const game of games) {
+        const moves = await prisma.move.findMany({
+            where: { gameId: game.id },
+            orderBy: { ply: "asc" }
+        });
+
+        const playerIsWhite = game.whitePlayerId === playerId;
+
+        for (let i = 0; i < moves.length; i++) {
+            const move = moves[i];
+
+            const isPlayerMove =
+                (move.ply % 2 === 1 && playerIsWhite) ||
+                (move.ply % 2 === 0 && !playerIsWhite);
+
+            if (!isPlayerMove) continue;
+
+            // Le joueur capture ?
+            if (!move.san.includes("x")) continue;
+
+            const valeur = valeurCapture(move.san);
+
+            // Vérifier si l’adversaire reprend dans les 2 demi-coups suivants
+            let repris = false;
+            for (let j = i + 1; j <= i + 2 && j < moves.length; j++) {
+                const reply = moves[j];
+                const replyIsOpponent =
+                    (reply.ply % 2 === 1 && !playerIsWhite) ||
+                    (reply.ply % 2 === 0 && playerIsWhite);
+
+                if (replyIsOpponent && reply.san.includes("x")) {
+                    repris = true;
+                    break;
+                }
+            }
+
+            // Vérifier si l’adversaire promu
+            let promotion = false;
+            for (let j = i + 1; j < moves.length; j++) {
+                const reply = moves[j];
+                const replyIsOpponent =
+                    (reply.ply % 2 === 1 && !playerIsWhite) ||
+                    (reply.ply % 2 === 0 && playerIsWhite);
+
+                if (replyIsOpponent && estPromotion(reply.san)) {
+                    promotion = true;
+                    break;
+                }
+            }
+
+            // Capture gagnante
+            if (!repris && !promotion) {
+                pointsGagnes += valeur;
+            }
         }
     }
 
-    const coups = moves.length;
+    const parties = games.length;
+    const pointsMoy = pointsGagnes / parties;
 
-    if (coups === 0) {
-        return {
-            score: 100,
-            coups: 0,
-            erreurs,
-            imprecisions,
-            brillants,
-            bonsCoups
-        };
-    }
-
-
-    // tactique = (1 - (E*2 + I - B*2 - F) / 100) * 100
-    const penalite = erreurs * 2 + imprecisions - brillants * 2 - bonsCoups;
-    const brut = (1 - penalite / 100) * 100;
-
-    const score = Math.round(Math.max(0, Math.min(100, brut)));
+    // Score final : calibré pour que les GM soient proches de 100
+    const score = Math.min(100, Math.round(pointsMoy * 10));
 
     return {
         score,
-        coups,
-        erreurs,
-        imprecisions,
-        brillants,
-        bonsCoups
+        pointsGagnes,
+        parties
     };
 }

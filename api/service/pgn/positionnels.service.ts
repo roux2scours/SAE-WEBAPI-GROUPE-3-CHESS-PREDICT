@@ -1,68 +1,121 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Game, Move } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export interface PositionnelResult {
+export interface PositionnelScore {
     score: number;
-    coups: number;
-    gaffes: number;
-    erreurs: number;
-    imprecisions: number;
+    perteTotale: number;
+    parties: number;
 }
 
-/**
- * Calcule le score positionnel d'une partie à partir de la base de données.
- * Les annotations sont directement lues dans Move.san :
- *  - "??" = gaffe
- *  - "?"  = erreur 
- *  - "?!" ou "!?" = imprécision
- */
-export async function scorePositionnelDepuisDB(gameId: number): Promise<PositionnelResult> {
-    // Récupération des coups de la partie
-    const moves = await prisma.move.findMany({
-        where: { gameId },
-        orderBy: { ply: "asc" }
+function valeurPiece(piece: string): number {
+    switch (piece) {
+        case "P": return 1; // pion
+        case "N": return 2; // cavalier
+        case "B": return 2; // fou
+        case "R": return 2; // tour
+        case "Q": return 3; // dame
+        default: return 0;
+    }
+}
+
+function pieceCapturee(san: string): string | null {
+    // Exemples SAN : "Nxe5", "Bxd4", "exd5", "Qxh7"
+    if (!san.includes("x")) return null;
+
+    // Si c'est un pion : "exd5"
+    if (/^[a-h]x/.test(san)) return "P";
+
+    // Sinon la pièce est la première lettre
+    const piece = san[0];
+    if ("NBRQ".includes(piece!)) return piece!;
+
+    return null;
+}
+
+function estPromotion(san: string): boolean {
+    return san.includes("=");
+}
+
+export async function scorePositionnelDepuisDB(playerId: number): Promise<PositionnelScore> {
+    const games: Game[] = await prisma.game.findMany({
+        where: {
+            OR: [
+                { whitePlayerId: playerId },
+                { blackPlayerId: playerId }
+            ]
+        }
     });
 
-    let gaffes = 0;
-    let erreurs = 0;
-    let imprecisions = 0;
-    // on compte les erreurs, imprécisions et gaffes
-    for (const move of moves) {
-        const san = move.san ?? "";
+    if (games.length === 0) {
+        return { score: 100, perteTotale: 0, parties: 0 };
+    }
 
-        if (san.includes("??")) {
-            gaffes++;
-        } else if (san.includes("?!") || san.includes("!?")) {
-            imprecisions++;
-        } else if (san.includes("?")) {
-            erreurs++;
+    let perteTotale = 0;
+
+    for (const game of games) {
+        const moves: Move[] = await prisma.move.findMany({
+            where: { gameId: game.id },
+            orderBy: { ply: "asc" }
+        });
+
+        const playerIsWhite = game.whitePlayerId === playerId;
+
+        for (let i = 0; i < moves.length; i++) {
+            const move = moves[i];
+
+            const isPlayerMove = (move.ply % 2 === 1 && playerIsWhite) ||
+                (move.ply % 2 === 0 && !playerIsWhite);
+
+            const isOpponentMove = !isPlayerMove;
+
+            // Si l'adversaire capture une pièce du joueur
+            if (isOpponentMove) {
+                const piece = pieceCapturee(move.san);
+                if (piece) {
+                    const valeur = valeurPiece(piece);
+
+                    // Vérifier si le joueur reprend dans les 2 demi-coups suivants
+                    let repris = false;
+                    for (let j = i + 1; j <= i + 2 && j < moves.length; j++) {
+                        const reply = moves[j];
+                        const replyIsPlayer = (reply.ply % 2 === 1 && playerIsWhite) ||
+                            (reply.ply % 2 === 0 && !playerIsWhite);
+
+                        if (replyIsPlayer && reply.san.includes("x")) {
+                            repris = true;
+                            break;
+                        }
+                    }
+
+                    // Vérifier si le joueur promeut un pion
+                    let promotion = false;
+                    for (let j = i + 1; j < moves.length; j++) {
+                        const reply = moves[j];
+                        const replyIsPlayer = (reply.ply % 2 === 1 && playerIsWhite) ||
+                            (reply.ply % 2 === 0 && !playerIsWhite);
+
+                        if (replyIsPlayer && estPromotion(reply.san)) {
+                            promotion = true;
+                            break;
+                        }
+                    }
+
+                    if (!repris && !promotion) {
+                        perteTotale += valeur;
+                    }
+                }
+            }
         }
     }
 
-    const coups = moves.length;
-
-    if (coups === 0) {
-        return {
-            score: 100,
-            coups: 0,
-            gaffes,
-            erreurs,
-            imprecisions
-        };
-    }
-
-    // positionnel = (1 - (G*3 + E*2 + I) / T) * 100
-    const penalite = gaffes * 3 + erreurs * 2 + imprecisions;
-    const brut = (1 - penalite / coups) * 100;
-
-    const score = Math.round(Math.max(0, Math.min(100, brut)));
+    const parties = games.length;
+    const brut = 100 - (perteTotale / parties) * 10;
+    const score = Math.max(0, Math.min(100, Math.round(brut)));
 
     return {
         score,
-        coups,
-        gaffes,
-        erreurs,
-        imprecisions
+        perteTotale,
+        parties
     };
 }
