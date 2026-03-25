@@ -13,6 +13,9 @@ switch ($page) {
     case 'test':
         include 'pages/test.php';
         break;
+    case 'game':
+        include 'pages/game.php';
+        break;
 }
 
 // Inclure le footer

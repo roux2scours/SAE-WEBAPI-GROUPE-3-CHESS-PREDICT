@@ -1,0 +1,225 @@
+:root {
+  --primary: #ff4c00;
+  --intermediate: #ff9500;
+  --secondary: #ffb60b;
+  --verydark: #1e1e1e;
+  --dark: #393939;
+  --grey: #565656;
+  --lightgrey: #b0b0b0;
+  --light: #efefef;
+}
+
+.game-selection {
+  width: 90%;
+  margin-top: 100px;
+  margin: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 50px;
+}
+
+#swap-players {
+  background-color: var(--primary);
+  color: var(--light);
+  border: none;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+#swap-players:hover {
+  box-shadow: 0px 0px 4px 3px var(--dark);
+}
+
+.game-screen-left-up {
+  display: flex;
+  gap: 50px;
+  align-items: center;
+}
+
+.game-screen-white-selection,
+.game-screen-black-selection {
+  display: inline-block;
+  align-items: center;
+  width: 308px;
+  padding: 20px;
+  border-radius: 20px;
+}
+
+.game-player-selector,
+.game-cadence-selector,
+.game-context-selector {
+  height: 50px;
+  width: 220px;
+  margin: auto;
+  margin-bottom: 20px;
+  padding-left: 20px;
+  background-color: var(--dark);
+  color: var(--light);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  outline: none;
+  font-size: 1.15rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+.game-player-selector:focus,
+.game-cadence-selector:focus,
+.game-context-selector:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 5px rgba(255, 76, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.game-valide-button {
+  height: 52px;
+  width: 220px;
+  margin: auto;
+  margin-bottom: 16px;
+  background-color: var(--primary);
+  color: #fff;
+  border: 2px solid #ff9500;
+  border-radius: 16px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 5px 0 0 #c35d00;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease;
+}
+
+.game-valide-button:hover {
+  filter: brightness(1.05);
+}
+
+.game-valide-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 0 #c35d00;
+}
+
+.game-screen-white-selection:has(.game-player-selector:focus),
+.game-screen-black-selection:has(.game-player-selector:focus) {
+  border: var(--primary) solid 1px;
+}
+
+.game-screen-left-down {
+  margin-top: 50px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
+.game-screen-left-down .game-cadence-selector,
+.game-screen-left-down .game-context-selector,
+.game-screen-left-down .game-valide-button {
+  width: 100%;
+  max-width: 410px;
+}
+
+.game-separator {
+  height: 400px;
+  width: 3px;
+  background-color: var(--intermediate);
+}
+
+.game-screen-right {
+  padding: 100px;
+}
+
+.chessboard {
+  width: 500px;
+  height: 600px;
+  padding: 40px;
+  background-color: var(--verydark);
+  border-radius: 30px;
+}
+
+.suggestion-list {
+  margin-top: 8px;
+  background: rgba(30, 30, 30, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  padding: 8px 12px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.suggestion-item:hover {
+  background: rgba(255, 76, 0, 0.25);
+}
+
+.game-list-wrapper {
+  width: 100%;
+  max-width: 500px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  color: #fff;
+}
+
+.game-list-wrapper h2 {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+}
+
+.game-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.game-select-item {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  text-align: left;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.game-select-item.selected,
+.game-select-item:hover {
+  background: rgba(255, 76, 0, 0.25);
+  border-color: var(--primary);
+}
+
+.pgn-display {
+  margin-top: 18px;
+  background: rgba(20, 20, 20, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 12px;
+  white-space: pre-wrap;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.9rem;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.hint {
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+}
+
+.pgn-container pre {
+  color: var(--dark);
+}
+
+.pgn-container a {
+  text-decoration: none;
+  color: var(--intermediate);
+}
