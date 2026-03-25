@@ -14,6 +14,10 @@ switch ($page) {
         include 'pages/game.php';
         $page_name = "Voir une partie";
         break;
+    case 'player':
+        include 'pages/player.php';
+        $page_name = "Joueur";
+        break;
     default :
         include 'pages/leaderboard.php';
         $page_name = "Leaderboard";

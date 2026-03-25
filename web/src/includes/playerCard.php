@@ -1,14 +1,7 @@
-<?php
-require_once 'config.php';
-
-$labels = ['victoire', 'défaite', 'nulle'];
-$stats_winrate = [70, 20, 10];
-?>
-
 <div class="player-card">
     <div class="player-card-head">
-        <p class="player-card-name">Magnus Carlsen</p>
-        <a href="index.php" class="player-card-rank">#1</a>
+        <p class="player-card-name"><?= htmlspecialchars($current_player_name) ?></p>
+        <a href="index.php" class="player-card-rank"><?= $current_player_rank ?></a>
     </div>
     <div class="player-card-horizontal-bar"></div>
     <div class="player-card-graphique">
@@ -19,33 +12,11 @@ $stats_winrate = [70, 20, 10];
         </canvas>
     </div>
     <div class="player-card-facultes">
-        <div class="player-card-faculte-force">
-            <p>Force : </p>
-            <p class="player-card-faculte-score">00</p>
-        </div>
-        <div class="player-card-faculte">
-            <p>Tactique : </p>
-            <p class="player-card-faculte-score">00</p>
-        </div>
-        <div class="player-card-faculte">
-            <p>Jeu positionnel : </p>
-            <p class="player-card-faculte-score">00</p>
-        </div>
-        <div class="player-card-faculte">
-            <p>Gestion du temps : </p>
-            <p class="player-card-faculte-score">00</p>
-        </div>
-        <div class="player-card-faculte">
-            <p>Ouverture : </p>
-            <p class="player-card-faculte-score">00</p>
-        </div>
-        <div class="player-card-faculte">
-            <p>Milieu de jeu : </p>
-            <p class="player-card-faculte-score">00</p>
-        </div>
-        <div class="player-card-faculte">
-            <p>Finale : </p>
-            <p class="player-card-faculte-score">00</p>
-        </div>
+        <?php foreach ($skills as $label => $score): ?>
+            <div class="player-card-faculte">
+                <p><?= $label ?> : </p>
+                <p class="player-card-faculte-score"><?= $score ?></p>
+            </div>
+        <?php endforeach; ?>
     </div>
 </div>
