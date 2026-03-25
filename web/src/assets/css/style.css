@@ -24,6 +24,14 @@ body {
   background: var(--grey);
   color: var(--light);
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-top: 100px;
+}
+
+main.container {
+  flex-grow: 1;
 }
 
 /* Navigation */
@@ -117,8 +125,10 @@ footer {
   color: var(--light);
   text-align: center;
   padding: 1rem 0;
-  margin-top: 2rem;
-
+  margin-top: auto;
+  /* Pousse le footer vers le bas */
+  width: 100%;
+  /* S'assure qu'il prend toute la largeur */
 }
 
 footer a {

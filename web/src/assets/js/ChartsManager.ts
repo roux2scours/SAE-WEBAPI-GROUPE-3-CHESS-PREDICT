@@ -23,8 +23,10 @@ class ChartsManager {
         return this.colorMapping[lowerLabel] || "#3b82f6"; // Bleu par défaut si non trouvé
       });
 
+      const chartType = (canvas.dataset.chartType || "pie") as any;
+
       new Chart(canvas, {
-        type: "pie",
+        type: chartType,
         data: {
           labels: labels,
           datasets: [

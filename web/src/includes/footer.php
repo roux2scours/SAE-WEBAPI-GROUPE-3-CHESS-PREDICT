@@ -8,3 +8,5 @@ require_once 'config.php';
         <a href="">Mentions légales</a>
     </div>
 </footer>
+</body>
+</html>

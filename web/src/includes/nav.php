@@ -12,7 +12,7 @@ require_once 'config.php';
         <ul class="nav-links">
             <li><a href="?page=leaderboard">Leaderboard</a></li>
             <li><a href="?page=game">Voir une partie</a></li>
-            <li><a href="?page=dev">Simuler un affrontement</a></li>
+            <li><a href="?page=affrontement">Simuler un affrontement</a></li>
         </ul>
     </div>
 </nav>
